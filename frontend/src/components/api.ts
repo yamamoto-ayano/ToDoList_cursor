@@ -10,7 +10,8 @@ export type Todo = {
 export async function fetchTodos(): Promise<Todo[]> {
   const res = await fetch(`${API_BASE}/todos`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch todos");
-  return await res.json();
+  const data = await res.json();
+  return data.data ?? [];
 }
 
 export async function addTodo(text: string): Promise<Todo> {
@@ -20,7 +21,8 @@ export async function addTodo(text: string): Promise<Todo> {
     body: JSON.stringify({ text }),
   });
   if (!res.ok) throw new Error("Failed to add todo");
-  return await res.json();
+  const data = await res.json();
+  return data.data;
 }
 
 export async function toggleTodo(id: number, completed: boolean): Promise<Todo> {
@@ -30,7 +32,8 @@ export async function toggleTodo(id: number, completed: boolean): Promise<Todo> 
     body: JSON.stringify({ completed }),
   });
   if (!res.ok) throw new Error("Failed to update todo");
-  return await res.json();
+  const data = await res.json();
+  return data.data;
 }
 
 export async function deleteTodo(id: number): Promise<{ id: number }> {
@@ -38,5 +41,6 @@ export async function deleteTodo(id: number): Promise<{ id: number }> {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete todo");
-  return await res.json();
+  const data = await res.json();
+  return data.data;
 } 
