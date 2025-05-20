@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pages:build": "next build && npx @cloudflare/next-on-pages",
+    "pages:deploy": "npx wrangler pages deploy .vercel/output/static",
+    "pages:watch": "npx wrangler pages dev .vercel/output/static --compatibility-date=2024-02-21"
   },
   "dependencies": {
     "next": "15.3.2",
