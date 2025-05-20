@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+'use client';
+
+import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
 
 const CHARACTER_SIZE = 64;
-const GROUND_Y = window.innerHeight - 120;
 const MOVE_SPEED = 4;
 const JUMP_POWER = 15;
 const GRAVITY = 0.8;
@@ -16,14 +17,21 @@ const COLORS = {
 };
 
 export default function CuteCharacter() {
+  const [groundY, setGroundY] = useState(0);
   const [x, setX] = useState(200);
-  const [y, setY] = useState(GROUND_Y);
+  const [y, setY] = useState(0);
   const [vy, setVy] = useState(0);
   const [isJumping, setIsJumping] = useState(false);
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [isMoving, setIsMoving] = useState(false);
   const [walkPhase, setWalkPhase] = useState(0);
   const keys = useRef({ left: false, right: false, space: false });
+
+  // クライアントサイドでのみwindowを参照
+  useLayoutEffect(() => {
+    setGroundY(window.innerHeight - 120);
+    setY(window.innerHeight - 120);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -94,14 +102,14 @@ export default function CuteCharacter() {
       setY((prevY) => {
         let nextY = prevY;
         let nextVy = vy;
-        if (keys.current.space && !isJumping && prevY === GROUND_Y) {
+        if (keys.current.space && !isJumping && prevY === groundY) {
           nextVy = -JUMP_POWER;
           setIsJumping(true);
         }
         nextVy += GRAVITY;
         nextY += nextVy;
-        if (nextY >= GROUND_Y) {
-          nextY = GROUND_Y;
+        if (nextY >= groundY) {
+          nextY = groundY;
           nextVy = 0;
           setIsJumping(false);
         }
@@ -117,7 +125,7 @@ export default function CuteCharacter() {
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [vy, isJumping]);
+  }, [vy, isJumping, groundY]);
 
   // 歩行フェーズに基づく足の位置の計算
   const getFeetPositions = () => {
