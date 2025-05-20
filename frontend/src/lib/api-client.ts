@@ -5,7 +5,7 @@ import type {
   CreateTodoInput,
   UpdateTodoInput,
   ApiResponse,
-} from '../../../../shared/types/todo';
+} from '../shared/types/todo';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://floral-truth-ed9d.daigaku-150207.workers.dev';
 
