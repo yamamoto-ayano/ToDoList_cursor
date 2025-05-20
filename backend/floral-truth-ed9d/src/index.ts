@@ -16,7 +16,7 @@ import { cors } from 'hono/cors';
 import { TODO_QUERIES } from './db/queries';
 import { ApiError, ErrorCodes, createErrorResponse } from './utils/errors';
 import type { Context } from 'hono';
-import type { Todo, CreateTodoInput, UpdateTodoInput } from '../../src/types/todo';
+import type { Todo, CreateTodoInput, UpdateTodoInput } from '../../../shared/types/todo';
 
 // D1の型
 interface Env {
@@ -31,12 +31,12 @@ app.use('*', cors());
 // Error handling middleware
 app.onError((err, c) => {
 	if (err instanceof ApiError) {
-		return c.json(createErrorResponse(err), err.statusCode);
+		return c.json(createErrorResponse(err), err.statusCode as 400 | 404 | 500);
 	}
 	console.error('Unhandled error:', err);
 	return c.json(
 		createErrorResponse(new ApiError('Internal server error', 500, 'INTERNAL_ERROR')),
-		500
+		500 as 500
 	);
 });
 
