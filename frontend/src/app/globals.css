@@ -10,7 +10,7 @@
   --danger: #FF6B6B;
   --pixel-border: 3px solid #4A3B37;
   --pixel-shadow: 0 0 0 3px #4A3B37, 3px 3px 0 0 #FFB6A3;
-  --font-pixel: 'Press Start 2P', 'VT323', 'DotGothic16', monospace;
+  --font-pixel: var(--font-press-start), var(--font-dotgothic), monospace;
 }
 
 @theme inline {

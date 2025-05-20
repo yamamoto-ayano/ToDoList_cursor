@@ -22,7 +22,7 @@ export default function CuteCharacter() {
   const [isJumping, setIsJumping] = useState(false);
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [isMoving, setIsMoving] = useState(false);
-  const [walkPhase, setWalkPhase] = useState(0); // 歩行アニメーションのフェーズ
+  const [walkPhase, setWalkPhase] = useState(0);
   const keys = useRef({ left: false, right: false, space: false });
 
   useEffect(() => {
@@ -64,15 +64,24 @@ export default function CuteCharacter() {
     };
   }, []);
 
+  // 歩行アニメーション用のEffect
   useEffect(() => {
-    let animationId: number;
-    let walkTimer: number;
-
     const updateWalkPhase = () => {
       if (isMoving) {
-        setWalkPhase(prev => (prev + 1) % 4); // 4フェーズの歩行アニメーション
+        setWalkPhase(prev => (prev + 1) % 4);
       }
     };
+
+    const walkTimer = window.setInterval(updateWalkPhase, 150);
+
+    return () => {
+      clearInterval(walkTimer);
+    };
+  }, [isMoving]);
+
+  // 物理演算とキー入力処理用のEffect
+  useEffect(() => {
+    let animationId: number;
 
     const loop = () => {
       setX((prevX) => {
@@ -103,12 +112,10 @@ export default function CuteCharacter() {
       animationId = requestAnimationFrame(loop);
     };
 
-    walkTimer = window.setInterval(updateWalkPhase, 150); // 歩行アニメーションの更新
     animationId = requestAnimationFrame(loop);
 
     return () => {
       cancelAnimationFrame(animationId);
-      clearInterval(walkTimer);
     };
   }, [vy, isJumping]);
 
