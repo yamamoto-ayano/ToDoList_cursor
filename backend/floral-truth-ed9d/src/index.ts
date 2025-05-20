@@ -12,8 +12,11 @@
  */
 
 import { Hono } from 'hono';
-import type { Context } from 'hono';
 import { cors } from 'hono/cors';
+import { TODO_QUERIES } from './db/queries';
+import { ApiError, ErrorCodes, createErrorResponse } from './utils/errors';
+import type { Context } from 'hono';
+import type { Todo, CreateTodoInput, UpdateTodoInput } from '../../src/types/todo';
 
 // D1の型
 interface Env {
@@ -25,39 +28,108 @@ const app = new Hono<{ Bindings: Env }>();
 // CORSを許可
 app.use('*', cors());
 
+// Error handling middleware
+app.onError((err, c) => {
+	if (err instanceof ApiError) {
+		return c.json(createErrorResponse(err), err.statusCode);
+	}
+	console.error('Unhandled error:', err);
+	return c.json(
+		createErrorResponse(new ApiError('Internal server error', 500, 'INTERNAL_ERROR')),
+		500
+	);
+});
+
 // 一覧取得
 app.get('/todos', async (c) => {
-	const { results } = await c.env.DB.prepare('SELECT * FROM todos ORDER BY id DESC').all();
-	return c.json(results);
+	try {
+		const { results } = await c.env.DB.prepare(TODO_QUERIES.GET_ALL).all<Todo>();
+		return c.json({ data: results });
+	} catch (error) {
+		throw new ApiError('Failed to fetch todos', 500, ErrorCodes.DATABASE_ERROR);
+	}
 });
 
 // 追加
 app.post('/todos', async (c) => {
-	const { text } = await c.req.json();
-	if (!text || typeof text !== 'string') {
-		return c.json({ error: 'text is required' }, 400);
+	try {
+		const input = await c.req.json<CreateTodoInput>();
+		if (!input.text?.trim()) {
+			throw new ApiError('Text is required', 400, ErrorCodes.VALIDATION_ERROR);
+		}
+
+		const result = await c.env.DB.prepare(TODO_QUERIES.CREATE)
+			.bind(input.text.trim())
+			.run();
+
+		if (!result.success) {
+			throw new ApiError('Failed to create todo', 500, ErrorCodes.DATABASE_ERROR);
+		}
+
+		const todo = await c.env.DB.prepare(TODO_QUERIES.GET_BY_ID)
+			.bind(result.meta.last_row_id)
+			.first<Todo>();
+
+		return c.json({ data: todo });
+	} catch (error) {
+		if (error instanceof ApiError) throw error;
+		throw new ApiError('Invalid request', 400, ErrorCodes.VALIDATION_ERROR);
 	}
-	const result = await c.env.DB.prepare('INSERT INTO todos (text, completed) VALUES (?, 0)').bind(text).run();
-	if (!result.success) return c.json({ error: 'insert failed' }, 500);
-	const todo = await c.env.DB.prepare('SELECT * FROM todos WHERE id = ?').bind(result.meta.last_row_id).first();
-	return c.json(todo);
 });
 
 // 完了切替
 app.put('/todos/:id', async (c) => {
-	const id = Number(c.req.param('id'));
-	const { completed } = await c.req.json();
-	if (typeof completed !== 'boolean') return c.json({ error: 'completed is required' }, 400);
-	await c.env.DB.prepare('UPDATE todos SET completed = ? WHERE id = ?').bind(completed ? 1 : 0, id).run();
-	const todo = await c.env.DB.prepare('SELECT * FROM todos WHERE id = ?').bind(id).first();
-	return c.json(todo);
+	try {
+		const id = Number(c.req.param('id'));
+		if (isNaN(id)) {
+			throw new ApiError('Invalid ID', 400, ErrorCodes.VALIDATION_ERROR);
+		}
+
+		const input = await c.req.json<UpdateTodoInput>();
+		if (typeof input.completed !== 'boolean') {
+			throw new ApiError('Completed status is required', 400, ErrorCodes.VALIDATION_ERROR);
+		}
+
+		await c.env.DB.prepare(TODO_QUERIES.UPDATE_COMPLETED)
+			.bind(input.completed ? 1 : 0, id)
+			.run();
+
+		const todo = await c.env.DB.prepare(TODO_QUERIES.GET_BY_ID)
+			.bind(id)
+			.first<Todo>();
+
+		if (!todo) {
+			throw new ApiError('Todo not found', 404, ErrorCodes.NOT_FOUND);
+		}
+
+		return c.json({ data: todo });
+	} catch (error) {
+		if (error instanceof ApiError) throw error;
+		throw new ApiError('Invalid request', 400, ErrorCodes.VALIDATION_ERROR);
+	}
 });
 
 // 削除
 app.delete('/todos/:id', async (c) => {
-	const id = Number(c.req.param('id'));
-	await c.env.DB.prepare('DELETE FROM todos WHERE id = ?').bind(id).run();
-	return c.json({ id });
+	try {
+		const id = Number(c.req.param('id'));
+		if (isNaN(id)) {
+			throw new ApiError('Invalid ID', 400, ErrorCodes.VALIDATION_ERROR);
+		}
+
+		const result = await c.env.DB.prepare(TODO_QUERIES.DELETE)
+			.bind(id)
+			.run();
+
+		if (!result.success) {
+			throw new ApiError('Failed to delete todo', 500, ErrorCodes.DATABASE_ERROR);
+		}
+
+		return c.json({ data: { id } });
+	} catch (error) {
+		if (error instanceof ApiError) throw error;
+		throw new ApiError('Invalid request', 400, ErrorCodes.VALIDATION_ERROR);
+	}
 });
 
 export default app;
