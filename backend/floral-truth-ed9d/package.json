@@ -1,0 +1,26 @@
+{
+	"name": "floral-truth-ed9d",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest",
+		"cf-typegen": "wrangler types"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"@types/node": "^22.15.19",
+		"drizzle-kit": "^0.31.1",
+		"hono": "^4.7.10",
+		"typescript": "^5.5.2",
+		"vitest": "~3.0.7",
+		"wrangler": "^4.16.0"
+	},
+	"dependencies": {
+		"@cloudflare/d1": "^1.4.1",
+		"drizzle-orm": "^0.43.1",
+		"sqlite3": "^5.1.7"
+	}
+}
