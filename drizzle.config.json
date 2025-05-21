@@ -1,8 +1,0 @@
-{
-  "schema": "./src/db/schema.ts",
-  "out": "./drizzle/migrations",
-  "driver": "d1",
-  "dbCredentials": {
-    "url": ""
-  }
-} 

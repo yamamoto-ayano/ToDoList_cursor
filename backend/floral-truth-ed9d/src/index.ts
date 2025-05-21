@@ -16,7 +16,7 @@ import { cors } from 'hono/cors';
 import { TODO_QUERIES } from './db/queries';
 import { ApiError, ErrorCodes, createErrorResponse } from './utils/errors';
 import type { Context } from 'hono';
-import type { Todo, CreateTodoInput, UpdateTodoInput } from '../../../shared/types/todo';
+import type { Todo, CreateTodoInput, UpdateTodoInput } from '../../../frontend/src/lib/types/todo';
 
 // D1の型
 interface Env {
